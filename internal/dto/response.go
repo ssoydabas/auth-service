@@ -1,5 +1,9 @@
 package dto
 
+import (
+	"github.com/ssoydabas/auth-service/pkg/validator"
+)
+
 type StandardResponse struct {
 	Data  interface{} `json:"data,omitempty"`
 	Error *ErrorData  `json:"error,omitempty"`
@@ -27,4 +31,10 @@ type AccountResponse struct {
 	PhotoUrl  string `json:"photo_url"`
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
+}
+
+type ValidationErrorResponse struct {
+	Code    int                         `json:"code"`
+	Message string                      `json:"message"`
+	Errors  []validator.ValidationError `json:"errors,omitempty"`
 }

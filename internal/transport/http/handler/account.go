@@ -6,6 +6,7 @@ import (
 
 	"github.com/ssoydabas/auth-service/internal/dto"
 	"github.com/ssoydabas/auth-service/internal/service"
+	"github.com/ssoydabas/auth-service/pkg/validator"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -76,6 +77,13 @@ func (h *accountHandler) CreateAccount(c echo.Context) error {
 	}
 
 	if err := req.Validate(); err != nil {
+		if validationErrors, ok := err.(validator.ValidationErrors); ok {
+			return c.JSON(echo.ErrBadRequest.Code, dto.ValidationErrorResponse{
+				Code:    400,
+				Message: "Validation failed",
+				Errors:  validationErrors,
+			})
+		}
 		return c.JSON(echo.ErrBadRequest.Code, dto.ErrorData{
 			Code:    400,
 			Message: err.Error(),
