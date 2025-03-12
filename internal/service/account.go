@@ -12,7 +12,6 @@ import (
 )
 
 type AccountService interface {
-	GetAccounts(ctx context.Context, page, pageSize int, search string) (*dto.PaginatedResponse, error)
 	CreateAccount(ctx context.Context, req dto.CreateAccountRequest) error
 	GetAccountByID(ctx context.Context, id string) (*dto.AccountResponse, error)
 }
@@ -25,16 +24,6 @@ func NewAccountService(accountRepository repository.AccountRepository) AccountSe
 	return &accountService{
 		accountRepository: accountRepository,
 	}
-}
-
-func (s *accountService) GetAccounts(ctx context.Context, page, pageSize int, search string) (*dto.PaginatedResponse, error) {
-	return &dto.PaginatedResponse{
-		Data:        []string{},
-		CurrentPage: 1,
-		PageSize:    10,
-		TotalItems:  0,
-		TotalPages:  0,
-	}, nil
 }
 
 func (s *accountService) CreateAccount(ctx context.Context, req dto.CreateAccountRequest) error {

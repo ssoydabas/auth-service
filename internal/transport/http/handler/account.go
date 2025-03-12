@@ -17,7 +17,6 @@ type AccountHandler interface {
 
 	CreateAccount(c echo.Context) error
 	GetAccountByID(c echo.Context) error
-	GetAccounts(c echo.Context) error
 }
 
 type accountHandler struct {
@@ -37,36 +36,8 @@ func (h *accountHandler) AddRoutes(e *echo.Group) {
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
 	}))
 
-	e.GET("/accounts", h.GetAccounts)
 	e.GET("/accounts/:id", h.GetAccountByID)
 	e.POST("/accounts", h.CreateAccount)
-}
-
-func (h *accountHandler) GetAccounts(c echo.Context) error {
-	page, err := strconv.Atoi(c.QueryParam("page"))
-	if err != nil || page < 1 {
-		page = 1
-	}
-
-	pageSize, err := strconv.Atoi(c.QueryParam("page_size"))
-	if err != nil || pageSize < 1 {
-		pageSize = 10
-	}
-	if pageSize > 100 {
-		pageSize = 100
-	}
-
-	search := c.QueryParam("search")
-
-	result, err := h.accountService.GetAccounts(c.Request().Context(), page, pageSize, search)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, dto.ErrorData{
-			Code:    http.StatusInternalServerError,
-			Message: err.Error(),
-		})
-	}
-
-	return c.JSON(http.StatusOK, result)
 }
 
 func (h *accountHandler) CreateAccount(c echo.Context) error {
