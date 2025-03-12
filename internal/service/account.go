@@ -18,6 +18,7 @@ type AccountService interface {
 	CreateAccount(ctx context.Context, req dto.CreateAccountRequest) error
 	AuthenticateAccount(ctx context.Context, req dto.AuthenticateAccountRequest) (string, error)
 	GetAccountByID(ctx context.Context, id string) (*dto.AccountResponse, error)
+	GetAccountByToken(ctx context.Context, token string) (*dto.AccountResponse, error)
 }
 
 type accountService struct {
@@ -102,4 +103,41 @@ func (s *accountService) GetAccountByID(ctx context.Context, id string) (*dto.Ac
 	}
 
 	return &response, nil
+}
+
+func (s *accountService) GetAccountByToken(ctx context.Context, tokenString string) (*dto.AccountResponse, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(os.Getenv("JWT_SECRET")), nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return nil, err
+	}
+
+	userID := fmt.Sprintf("%.0f", claims["sub"].(float64))
+
+	account, err := s.accountRepository.GetAccountByID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get account: %w", err)
+	}
+
+	return &dto.AccountResponse{
+		ID:                 account.ID,
+		FirstName:          account.FirstName,
+		LastName:           account.LastName,
+		Email:              account.Email,
+		Phone:              account.Phone,
+		PhotoUrl:           account.PhotoUrl,
+		CreatedAt:          account.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:          account.UpdatedAt.Format(time.RFC3339),
+		VerificationStatus: account.VerificationStatus,
+	}, nil
 }

@@ -18,6 +18,7 @@ type AccountHandler interface {
 	CreateAccount(c echo.Context) error
 	AuthenticateAccount(c echo.Context) error
 	GetAccountByID(c echo.Context) error
+	GetAccountByToken(c echo.Context) error
 }
 
 type accountHandler struct {
@@ -40,6 +41,7 @@ func (h *accountHandler) AddRoutes(e *echo.Group) {
 	e.POST("/accounts", h.CreateAccount)
 	e.GET("/accounts/:id", h.GetAccountByID)
 	e.POST("/accounts/authenticate", h.AuthenticateAccount)
+	e.GET("/accounts/me", h.GetAccountByToken)
 }
 
 func (h *accountHandler) CreateAccount(c echo.Context) error {
@@ -128,6 +130,33 @@ func (h *accountHandler) GetAccountByID(c echo.Context) error {
 	}
 
 	account, err := h.accountService.GetAccountByID(c.Request().Context(), id)
+	if err != nil {
+		return c.JSON(echo.ErrInternalServerError.Code, dto.ErrorData{
+			Code:    500,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, dto.StandardResponse{
+		Data: account,
+	})
+}
+
+func (h *accountHandler) GetAccountByToken(c echo.Context) error {
+	authHeader := c.Request().Header.Get("Authorization")
+	if authHeader == "" {
+		return c.JSON(echo.ErrBadRequest.Code, dto.ErrorData{
+			Code:    400,
+			Message: "Missing authorization header",
+		})
+	}
+
+	token := authHeader
+	if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
+		token = authHeader[7:]
+	}
+
+	account, err := h.accountService.GetAccountByToken(c.Request().Context(), token)
 	if err != nil {
 		return c.JSON(echo.ErrInternalServerError.Code, dto.ErrorData{
 			Code:    500,
