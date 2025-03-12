@@ -23,14 +23,19 @@ type PaginatedResponse struct {
 }
 
 type AccountResponse struct {
-	ID        uint   `json:"id"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Email     string `json:"email"`
-	Phone     string `json:"phone"`
-	PhotoUrl  string `json:"photo_url"`
-	CreatedAt string `json:"created_at"`
-	UpdatedAt string `json:"updated_at"`
+	ID                 uint   `json:"id"`
+	FirstName          string `json:"first_name"`
+	LastName           string `json:"last_name"`
+	Email              string `json:"email"`
+	Phone              string `json:"phone"`
+	PhotoUrl           string `json:"photo_url"`
+	CreatedAt          string `json:"created_at"`
+	UpdatedAt          string `json:"updated_at"`
+	VerificationStatus string `json:"verification_status"`
+}
+
+type AuthenticateAccountResponse struct {
+	Token string `json:"token"`
 }
 
 type ValidationErrorResponse struct {

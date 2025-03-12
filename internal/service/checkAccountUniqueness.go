@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func (s *accountService) checkUniqueness(ctx context.Context, email, phone string) error {
+func (s *accountService) checkAccountUniqueness(ctx context.Context, email, phone string) error {
 	emailExists, err := s.accountRepository.ExistsByEmail(ctx, email)
 	if err != nil {
 		return fmt.Errorf("failed to check email existence: %w", err)
