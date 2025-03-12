@@ -36,6 +36,10 @@ func (s *accountService) GetAccounts(ctx context.Context, page, pageSize int, se
 }
 
 func (s *accountService) CreateAccount(ctx context.Context, req dto.CreateAccountRequest) error {
+	if err := s.checkUniqueness(ctx, req.Email, req.Phone); err != nil {
+		return err
+	}
+
 	model := models.Account{
 		FirstName:          req.FirstName,
 		LastName:           req.LastName,

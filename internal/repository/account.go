@@ -11,6 +11,9 @@ import (
 type AccountRepository interface {
 	GetAccounts(ctx context.Context, page, pageSize int) ([]models.Account, int64, error)
 	CreateAccount(ctx context.Context, model models.Account) error
+
+	ExistsByEmail(ctx context.Context, email string) (bool, error)
+	ExistsByPhone(ctx context.Context, phone string) (bool, error)
 }
 
 type accountRepository struct {
@@ -46,4 +49,34 @@ func (r *accountRepository) GetAccounts(ctx context.Context, page, pageSize int)
 
 func (r *accountRepository) CreateAccount(ctx context.Context, model models.Account) error {
 	return r.db.WithContext(ctx).Create(&model).Error
+}
+
+func (r *accountRepository) ExistsByEmail(ctx context.Context, email string) (bool, error) {
+	exists := false
+	err := r.db.WithContext(ctx).
+		Model(&models.Account{}).
+		Select("1").
+		Where("email = ?", email).
+		First(&exists).
+		Error
+
+	if err == gorm.ErrRecordNotFound {
+		return false, nil
+	}
+	return exists, err
+}
+
+func (r *accountRepository) ExistsByPhone(ctx context.Context, phone string) (bool, error) {
+	exists := false
+	err := r.db.WithContext(ctx).
+		Model(&models.Account{}).
+		Select("1").
+		Where("phone = ?", phone).
+		First(&exists).
+		Error
+
+	if err == gorm.ErrRecordNotFound {
+		return false, nil
+	}
+	return exists, err
 }
