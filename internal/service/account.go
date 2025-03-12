@@ -9,6 +9,8 @@ import (
 	"github.com/ssoydabas/auth-service/internal/repository"
 
 	"github.com/ssoydabas/auth-service/models"
+
+	"github.com/google/uuid"
 )
 
 type AccountService interface {
@@ -31,15 +33,22 @@ func (s *accountService) CreateAccount(ctx context.Context, req dto.CreateAccoun
 		return err
 	}
 
-	model := models.Account{
+	account := models.Account{
 		FirstName:          req.FirstName,
 		LastName:           req.LastName,
 		Email:              req.Email,
 		Phone:              req.Phone,
 		VerificationStatus: "pending",
+		AccountPassword: models.AccountPassword{
+			Password: hashPassword(req.Password),
+		},
+		AccountTokens: models.AccountToken{
+			EmailVerificationToken: uuid.New().String(),
+			PhoneVerificationToken: uuid.New().String(),
+		},
 	}
 
-	if err := s.accountRepository.CreateAccount(ctx, model); err != nil {
+	if err := s.accountRepository.CreateAccount(ctx, account); err != nil {
 		return fmt.Errorf("failed to create account: %w", err)
 	}
 
