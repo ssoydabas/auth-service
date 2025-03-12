@@ -19,6 +19,8 @@ type AccountHandler interface {
 	AuthenticateAccount(c echo.Context) error
 	GetAccountByID(c echo.Context) error
 	GetAccountByToken(c echo.Context) error
+	SetResetPasswordToken(c echo.Context) error
+	ResetPassword(c echo.Context) error
 }
 
 type accountHandler struct {
@@ -42,6 +44,8 @@ func (h *accountHandler) AddRoutes(e *echo.Group) {
 	e.GET("/accounts/:id", h.GetAccountByID)
 	e.POST("/accounts/authenticate", h.AuthenticateAccount)
 	e.GET("/accounts/me", h.GetAccountByToken)
+	e.POST("/accounts/set-reset-password-token", h.SetResetPasswordToken)
+	e.POST("/accounts/reset-password", h.ResetPassword)
 }
 
 func (h *accountHandler) CreateAccount(c echo.Context) error {
@@ -167,4 +171,74 @@ func (h *accountHandler) GetAccountByToken(c echo.Context) error {
 	return c.JSON(http.StatusOK, dto.StandardResponse{
 		Data: account,
 	})
+}
+
+func (h *accountHandler) SetResetPasswordToken(c echo.Context) error {
+	var req dto.SetResetPasswordTokenRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(echo.ErrBadRequest.Code, dto.ErrorData{
+			Code:    400,
+			Message: "Invalid request body",
+		})
+	}
+
+	if err := req.Validate(); err != nil {
+		if validationErrors, ok := err.(validator.ValidationErrors); ok {
+			return c.JSON(echo.ErrBadRequest.Code, dto.ValidationErrorResponse{
+				Code:    400,
+				Message: "Validation failed",
+				Errors:  validationErrors,
+			})
+		}
+		return c.JSON(echo.ErrBadRequest.Code, dto.ErrorData{
+			Code:    400,
+			Message: err.Error(),
+		})
+	}
+
+	token, err := h.accountService.SetResetPasswordToken(c.Request().Context(), req)
+	if err != nil {
+		return c.JSON(echo.ErrInternalServerError.Code, dto.ErrorData{
+			Code:    400,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, dto.StandardResponse{
+		Data: token,
+	})
+}
+
+func (h *accountHandler) ResetPassword(c echo.Context) error {
+	var req dto.ResetPasswordRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(echo.ErrBadRequest.Code, dto.ErrorData{
+			Code:    400,
+			Message: "Invalid request body",
+		})
+	}
+
+	if err := req.Validate(); err != nil {
+		if validationErrors, ok := err.(validator.ValidationErrors); ok {
+			return c.JSON(echo.ErrBadRequest.Code, dto.ValidationErrorResponse{
+				Code:    400,
+				Message: "Validation failed",
+				Errors:  validationErrors,
+			})
+		}
+		return c.JSON(echo.ErrBadRequest.Code, dto.ErrorData{
+			Code:    400,
+			Message: err.Error(),
+		})
+	}
+
+	err := h.accountService.ResetPassword(c.Request().Context(), req)
+	if err != nil {
+		return c.JSON(echo.ErrInternalServerError.Code, dto.ErrorData{
+			Code:    500,
+			Message: err.Error(),
+		})
+	}
+
+	return c.NoContent(http.StatusOK)
 }

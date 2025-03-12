@@ -19,6 +19,8 @@ type AccountService interface {
 	AuthenticateAccount(ctx context.Context, req dto.AuthenticateAccountRequest) (string, error)
 	GetAccountByID(ctx context.Context, id string) (*dto.AccountResponse, error)
 	GetAccountByToken(ctx context.Context, token string) (*dto.AccountResponse, error)
+	SetResetPasswordToken(ctx context.Context, req dto.SetResetPasswordTokenRequest) (string, error)
+	ResetPassword(ctx context.Context, req dto.ResetPasswordRequest) error
 }
 
 type accountService struct {
@@ -140,4 +142,32 @@ func (s *accountService) GetAccountByToken(ctx context.Context, tokenString stri
 		UpdatedAt:          account.UpdatedAt.Format(time.RFC3339),
 		VerificationStatus: account.VerificationStatus,
 	}, nil
+}
+
+func (s *accountService) SetResetPasswordToken(ctx context.Context, req dto.SetResetPasswordTokenRequest) (string, error) {
+	account, err := s.accountRepository.GetAccountByEmailOrPhone(ctx, req.Email, req.Phone)
+	if err != nil {
+		return "", fmt.Errorf("failed to get account by email or phone: %w", err)
+	}
+
+	token := uuid.New().String()
+
+	if err := s.accountRepository.SetResetPasswordToken(ctx, account.ID, token); err != nil {
+		return "", fmt.Errorf("failed to set update password token: %w", err)
+	}
+
+	return token, nil
+}
+
+func (s *accountService) ResetPassword(ctx context.Context, req dto.ResetPasswordRequest) error {
+	account, err := s.accountRepository.GetAccountByResetPasswordToken(ctx, req.Token)
+	if err != nil {
+		return fmt.Errorf("failed to get account by reset password token: %w", err)
+	}
+
+	if err := s.accountRepository.UpdateAccountPassword(ctx, account.ID, hashPassword(req.Password)); err != nil {
+		return fmt.Errorf("failed to reset password: %w", err)
+	}
+
+	return nil
 }
