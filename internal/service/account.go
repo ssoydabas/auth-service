@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/ssoydabas/auth-service/internal/dto"
 	"github.com/ssoydabas/auth-service/internal/repository"
@@ -13,6 +14,7 @@ import (
 type AccountService interface {
 	GetAccounts(ctx context.Context, page, pageSize int, search string) (*dto.PaginatedResponse, error)
 	CreateAccount(ctx context.Context, req dto.CreateAccountRequest) error
+	GetAccountByID(ctx context.Context, id string) (*dto.AccountResponse, error)
 }
 
 type accountService struct {
@@ -53,4 +55,24 @@ func (s *accountService) CreateAccount(ctx context.Context, req dto.CreateAccoun
 	}
 
 	return nil
+}
+
+func (s *accountService) GetAccountByID(ctx context.Context, id string) (*dto.AccountResponse, error) {
+	account, err := s.accountRepository.GetAccountByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get account by id: %w", err)
+	}
+
+	response := dto.AccountResponse{
+		ID:        account.ID,
+		FirstName: account.FirstName,
+		LastName:  account.LastName,
+		Email:     account.Email,
+		Phone:     account.Phone,
+		PhotoUrl:  account.PhotoUrl,
+		CreatedAt: account.CreatedAt.Format(time.RFC3339),
+		UpdatedAt: account.UpdatedAt.Format(time.RFC3339),
+	}
+
+	return &response, nil
 }

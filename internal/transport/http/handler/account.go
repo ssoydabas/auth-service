@@ -16,6 +16,7 @@ type AccountHandler interface {
 	AddRoutes(e *echo.Group)
 
 	CreateAccount(c echo.Context) error
+	GetAccountByID(c echo.Context) error
 	GetAccounts(c echo.Context) error
 }
 
@@ -37,6 +38,7 @@ func (h *accountHandler) AddRoutes(e *echo.Group) {
 	}))
 
 	e.GET("/accounts", h.GetAccounts)
+	e.GET("/accounts/:id", h.GetAccountByID)
 	e.POST("/accounts", h.CreateAccount)
 }
 
@@ -98,4 +100,33 @@ func (h *accountHandler) CreateAccount(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusOK)
+}
+
+func (h *accountHandler) GetAccountByID(c echo.Context) error {
+	id := c.Param("id")
+	if id == "" {
+		return c.JSON(echo.ErrBadRequest.Code, dto.ErrorData{
+			Code:    400,
+			Message: "Invalid account ID",
+		})
+	}
+
+	if _, err := strconv.ParseUint(id, 10, 64); err != nil {
+		return c.JSON(echo.ErrBadRequest.Code, dto.ErrorData{
+			Code:    400,
+			Message: "Invalid account ID: must be a positive number",
+		})
+	}
+
+	account, err := h.accountService.GetAccountByID(c.Request().Context(), id)
+	if err != nil {
+		return c.JSON(echo.ErrInternalServerError.Code, dto.ErrorData{
+			Code:    500,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, dto.StandardResponse{
+		Data: account,
+	})
 }

@@ -11,6 +11,7 @@ import (
 type AccountRepository interface {
 	GetAccounts(ctx context.Context, page, pageSize int) ([]models.Account, int64, error)
 	CreateAccount(ctx context.Context, model models.Account) error
+	GetAccountByID(ctx context.Context, id string) (*models.Account, error)
 
 	ExistsByEmail(ctx context.Context, email string) (bool, error)
 	ExistsByPhone(ctx context.Context, phone string) (bool, error)
@@ -49,6 +50,14 @@ func (r *accountRepository) GetAccounts(ctx context.Context, page, pageSize int)
 
 func (r *accountRepository) CreateAccount(ctx context.Context, model models.Account) error {
 	return r.db.WithContext(ctx).Create(&model).Error
+}
+
+func (r *accountRepository) GetAccountByID(ctx context.Context, id string) (*models.Account, error) {
+	var account models.Account
+	if err := r.db.WithContext(ctx).First(&account, id).Error; err != nil {
+		return nil, err
+	}
+	return &account, nil
 }
 
 func (r *accountRepository) ExistsByEmail(ctx context.Context, email string) (bool, error) {
