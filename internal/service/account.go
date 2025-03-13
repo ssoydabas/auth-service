@@ -21,6 +21,7 @@ type AccountService interface {
 	GetAccountByToken(ctx context.Context, token string) (*dto.AccountResponse, error)
 	SetResetPasswordToken(ctx context.Context, req dto.SetResetPasswordTokenRequest) (string, error)
 	ResetPassword(ctx context.Context, req dto.ResetPasswordRequest) error
+	VerifyAccountEmail(ctx context.Context, req dto.VerifyAccountRequest) error
 }
 
 type accountService struct {
@@ -167,6 +168,23 @@ func (s *accountService) ResetPassword(ctx context.Context, req dto.ResetPasswor
 
 	if err := s.accountRepository.UpdateAccountPassword(ctx, account.ID, hashPassword(req.Password)); err != nil {
 		return fmt.Errorf("failed to reset password: %w", err)
+	}
+
+	return nil
+}
+
+func (s *accountService) VerifyAccountEmail(ctx context.Context, req dto.VerifyAccountRequest) error {
+	account, err := s.accountRepository.GetAccountByEmailVerificationToken(ctx, req.Token)
+	if err != nil {
+		return fmt.Errorf("failed to get account by email verification token: %w", err)
+	}
+
+	if err := s.accountRepository.UpdateAccountVerificationStatus(ctx, account.ID, "verified"); err != nil {
+		return fmt.Errorf("failed to update account verification status: %w", err)
+	}
+
+	if err := s.accountRepository.ClearEmailVerificationToken(ctx, account.ID); err != nil {
+		return fmt.Errorf("failed to clear email verification token: %w", err)
 	}
 
 	return nil

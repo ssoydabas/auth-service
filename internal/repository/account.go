@@ -20,6 +20,10 @@ type AccountRepository interface {
 	SetResetPasswordToken(ctx context.Context, accountID uint, token string) error
 	GetAccountByResetPasswordToken(ctx context.Context, token string) (*models.Account, error)
 	UpdateAccountPassword(ctx context.Context, accountID uint, password string) error
+
+	UpdateAccountVerificationStatus(ctx context.Context, accountID uint, status string) error
+	GetAccountByEmailVerificationToken(ctx context.Context, token string) (*models.Account, error)
+	ClearEmailVerificationToken(ctx context.Context, accountID uint) error
 }
 
 type accountRepository struct {
@@ -122,4 +126,30 @@ func (r *accountRepository) UpdateAccountPassword(ctx context.Context, accountID
 
 		return nil
 	})
+}
+
+func (r *accountRepository) GetAccountByEmailVerificationToken(ctx context.Context, token string) (*models.Account, error) {
+	var account models.Account
+	if err := r.db.WithContext(ctx).
+		Preload("AccountTokens").
+		Joins("JOIN account_tokens ON account_tokens.account_id = accounts.id").
+		Where("account_tokens.email_verification_token = ?", token).
+		First(&account).Error; err != nil {
+		return nil, err
+	}
+	return &account, nil
+}
+
+func (r *accountRepository) UpdateAccountVerificationStatus(ctx context.Context, accountID uint, status string) error {
+	return r.db.WithContext(ctx).
+		Model(&models.Account{}).
+		Where("id = ?", accountID).
+		Update("verification_status", status).Error
+}
+
+func (r *accountRepository) ClearEmailVerificationToken(ctx context.Context, accountID uint) error {
+	return r.db.WithContext(ctx).
+		Model(&models.AccountToken{}).
+		Where("account_id = ?", accountID).
+		Update("email_verification_token", "").Error
 }

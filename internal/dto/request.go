@@ -31,6 +31,10 @@ type ResetPasswordRequest struct {
 	ConfirmPassword string `json:"confirm_password" validate:"required,min=8"`
 }
 
+type VerifyAccountRequest struct {
+	Token string `json:"token" validate:"required"`
+}
+
 func (r *CreateAccountRequest) Validate() error {
 	return validator.ValidateStruct(r)
 }
@@ -66,6 +70,14 @@ func (r *ResetPasswordRequest) Validate() error {
 
 	if r.Password != r.ConfirmPassword {
 		return fmt.Errorf("password and confirm password do not match")
+	}
+
+	return validator.ValidateStruct(r)
+}
+
+func (r *VerifyAccountRequest) Validate() error {
+	if r.Token == "" {
+		return fmt.Errorf("token is required")
 	}
 
 	return validator.ValidateStruct(r)

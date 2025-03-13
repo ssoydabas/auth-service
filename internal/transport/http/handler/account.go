@@ -21,6 +21,7 @@ type AccountHandler interface {
 	GetAccountByToken(c echo.Context) error
 	SetResetPasswordToken(c echo.Context) error
 	ResetPassword(c echo.Context) error
+	VerifyAccountEmail(c echo.Context) error
 }
 
 type accountHandler struct {
@@ -46,6 +47,7 @@ func (h *accountHandler) AddRoutes(e *echo.Group) {
 	e.GET("/accounts/me", h.GetAccountByToken)
 	e.POST("/accounts/set-reset-password-token", h.SetResetPasswordToken)
 	e.POST("/accounts/reset-password", h.ResetPassword)
+	e.POST("/accounts/verify-email", h.VerifyAccountEmail)
 }
 
 func (h *accountHandler) CreateAccount(c echo.Context) error {
@@ -233,6 +235,36 @@ func (h *accountHandler) ResetPassword(c echo.Context) error {
 	}
 
 	err := h.accountService.ResetPassword(c.Request().Context(), req)
+	if err != nil {
+		return c.JSON(echo.ErrInternalServerError.Code, dto.ErrorData{
+			Code:    500,
+			Message: err.Error(),
+		})
+	}
+
+	return c.NoContent(http.StatusOK)
+}
+
+func (h *accountHandler) VerifyAccountEmail(c echo.Context) error {
+	var req dto.VerifyAccountRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(echo.ErrBadRequest.Code, dto.ErrorData{
+			Code:    400,
+			Message: "Invalid request body",
+		})
+	}
+
+	if err := req.Validate(); err != nil {
+		if validationErrors, ok := err.(validator.ValidationErrors); ok {
+			return c.JSON(echo.ErrBadRequest.Code, dto.ValidationErrorResponse{
+				Code:    400,
+				Message: "Validation failed",
+				Errors:  validationErrors,
+			})
+		}
+	}
+
+	err := h.accountService.VerifyAccountEmail(c.Request().Context(), req)
 	if err != nil {
 		return c.JSON(echo.ErrInternalServerError.Code, dto.ErrorData{
 			Code:    500,
