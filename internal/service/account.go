@@ -22,6 +22,7 @@ type AccountService interface {
 	GetAccountByToken(ctx context.Context, token string) (*dto.AccountResponse, error)
 	SetResetPasswordToken(ctx context.Context, req dto.SetResetPasswordTokenRequest) (string, error)
 	ResetPassword(ctx context.Context, req dto.ResetPasswordRequest) error
+	GetAccountEmailVerificationTokenByID(ctx context.Context, id string) (string, error)
 	VerifyAccountEmail(ctx context.Context, req dto.VerifyAccountRequest) error
 }
 
@@ -96,20 +97,21 @@ func (s *accountService) AuthenticateAccount(ctx context.Context, req dto.Authen
 }
 
 func (s *accountService) GetAccountByID(ctx context.Context, id string) (*dto.AccountResponse, error) {
-	account, err := s.accountRepository.GetAccountByID(ctx, id)
+	account, err := s.accountRepository.GetAccountByID(ctx, id, false)
 	if err != nil {
 		return nil, errors.NotFoundError("Account not found")
 	}
 
 	response := dto.AccountResponse{
-		ID:        account.ID,
-		FirstName: account.FirstName,
-		LastName:  account.LastName,
-		Email:     account.Email,
-		Phone:     account.Phone,
-		PhotoUrl:  account.PhotoUrl,
-		CreatedAt: account.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: account.UpdatedAt.Format(time.RFC3339),
+		ID:                 account.ID,
+		FirstName:          account.FirstName,
+		LastName:           account.LastName,
+		Email:              account.Email,
+		Phone:              account.Phone,
+		PhotoUrl:           account.PhotoUrl,
+		VerificationStatus: account.VerificationStatus,
+		CreatedAt:          account.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:          account.UpdatedAt.Format(time.RFC3339),
 	}
 
 	return &response, nil
@@ -134,7 +136,7 @@ func (s *accountService) GetAccountByToken(ctx context.Context, tokenString stri
 
 	userID := fmt.Sprintf("%.0f", claims["sub"].(float64))
 
-	account, err := s.accountRepository.GetAccountByID(ctx, userID)
+	account, err := s.accountRepository.GetAccountByID(ctx, userID, false)
 	if err != nil {
 		return nil, errors.NotFoundError("Account not found")
 	}
@@ -178,6 +180,19 @@ func (s *accountService) ResetPassword(ctx context.Context, req dto.ResetPasswor
 	}
 
 	return nil
+}
+
+func (s *accountService) GetAccountEmailVerificationTokenByID(ctx context.Context, id string) (string, error) {
+	account, err := s.accountRepository.GetAccountByID(ctx, id, true)
+	if err != nil {
+		return "", errors.NotFoundError("Account not found")
+	}
+
+	if account.VerificationStatus != "pending" {
+		return "", errors.BadRequestError("Account already verified")
+	}
+
+	return account.AccountTokens.EmailVerificationToken, nil
 }
 
 func (s *accountService) VerifyAccountEmail(ctx context.Context, req dto.VerifyAccountRequest) error {

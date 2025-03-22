@@ -10,7 +10,7 @@ import (
 
 type AccountRepository interface {
 	CreateAccount(ctx context.Context, model models.Account) error
-	GetAccountByID(ctx context.Context, id string) (*models.Account, error)
+	GetAccountByID(ctx context.Context, id string, preloadTokens bool) (*models.Account, error)
 	GetAccountByEmailOrPhone(ctx context.Context, email, phone string) (*models.Account, error)
 	GetAccountPasswordByAccountID(ctx context.Context, accountID uint) (*models.AccountPassword, error)
 
@@ -40,9 +40,15 @@ func (r *accountRepository) CreateAccount(ctx context.Context, model models.Acco
 	return r.db.WithContext(ctx).Create(&model).Error
 }
 
-func (r *accountRepository) GetAccountByID(ctx context.Context, id string) (*models.Account, error) {
+func (r *accountRepository) GetAccountByID(ctx context.Context, id string, preloadTokens bool) (*models.Account, error) {
 	var account models.Account
-	if err := r.db.WithContext(ctx).First(&account, id).Error; err != nil {
+	query := r.db.WithContext(ctx)
+
+	if preloadTokens {
+		query = query.Preload("AccountTokens")
+	}
+
+	if err := query.First(&account, id).Error; err != nil {
 		return nil, err
 	}
 	return &account, nil

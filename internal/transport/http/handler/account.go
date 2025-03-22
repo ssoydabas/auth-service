@@ -22,6 +22,7 @@ type AccountHandler interface {
 	GetAccountByToken(c echo.Context) error
 	SetResetPasswordToken(c echo.Context) error
 	ResetPassword(c echo.Context) error
+	GetAccountEmailVerificationTokenByID(c echo.Context) error
 	VerifyAccountEmail(c echo.Context) error
 }
 
@@ -48,6 +49,7 @@ func (h *accountHandler) AddRoutes(e *echo.Group) {
 	e.GET("/accounts/me", h.GetAccountByToken)
 	e.POST("/accounts/set-reset-password-token", h.SetResetPasswordToken)
 	e.POST("/accounts/reset-password", h.ResetPassword)
+	e.GET("/accounts/get-email-verification-token/:id", h.GetAccountEmailVerificationTokenByID)
 	e.POST("/accounts/verify-email", h.VerifyAccountEmail)
 }
 
@@ -260,6 +262,40 @@ func (h *accountHandler) ResetPassword(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusOK)
+}
+
+// @Summary Get email verification token by account ID
+// @Description Get email verification token by account ID
+// @Tags accounts
+// @Accept json
+// @Produce json
+// @Param id path integer true "Account ID"
+// @Success 200 {object} dto.StandardResponse{data=string} "Verification token"
+// @Failure 400 {object} dto.ErrorData
+// @Failure 404 {object} dto.ErrorData
+// @Failure 500 {object} dto.ErrorData
+// @Router /accounts/email-verification-token/{id} [get]
+func (h *accountHandler) GetAccountEmailVerificationTokenByID(c echo.Context) error {
+	id := c.Param("id")
+	if id == "" {
+		return errors.BadRequestError("Account ID is required")
+	}
+
+	if _, err := strconv.ParseUint(id, 10, 64); err != nil {
+		return errors.BadRequestError("Invalid account ID: must be a positive number")
+	}
+
+	token, err := h.accountService.GetAccountEmailVerificationTokenByID(c.Request().Context(), id)
+	if err != nil {
+		if appErr, ok := err.(*errors.AppError); ok {
+			return appErr
+		}
+		return errors.InternalError(err)
+	}
+
+	return c.JSON(http.StatusOK, dto.StandardResponse{
+		Data: token,
+	})
 }
 
 // @Summary Verify email address

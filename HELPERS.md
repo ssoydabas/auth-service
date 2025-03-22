@@ -1,6 +1,16 @@
-# SQL HELPERS
+# HELPERS
 
-## TRUNCATE ALL TABLES
+## Swagger
+
+### Generate Swagger JSON
+
+```bash
+swag init -g ./cmd/main.go
+```
+
+## SQL HELPERS
+
+### TRUNCATE ALL TABLES
 
 ```sql
 DO $$
