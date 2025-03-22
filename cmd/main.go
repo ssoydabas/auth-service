@@ -1,5 +1,48 @@
 package main
 
+// @title Authentication Service API
+// @version 1.0
+// @description A comprehensive authentication service providing user management, authentication, and authorization capabilities.
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name Sertan Soydabas
+// @contact.email ssoydabas41@gmail.com
+// @contact.url https://github.com/ssoydabas
+
+// @license.name MIT
+// @license.url https://github.com/ssoydabas/auth-service/LICENSE
+
+// @host localhost:8080
+// @BasePath /api/v1
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Enter the token with the `Bearer ` prefix, e.g. "Bearer abcde12345"
+
+// @schemes http https
+// @produce application/json
+// @consumes application/json
+
+// @tag.name Accounts
+// @tag.description Account management operations including registration, login, profile updates, and password management
+// @tag.docs.url https://docs.example.com/accounts
+// @tag.docs.description Extended documentation for the account operations
+
+// @tag.name Authentication
+// @tag.description Authentication operations including token management and validation
+// @tag.docs.url https://docs.example.com/authentication
+// @tag.docs.description Detailed information about the authentication process
+
+// @tag.name Authorization
+// @tag.description Authorization operations including role management and permissions
+// @tag.docs.url https://docs.example.com/authorization
+// @tag.docs.description Complete guide to authorization mechanisms
+
+// @x-logo {"url": "https://your-logo-url.com", "backgroundColor": "#FFFFFF", "altText": "API Logo"}
+
+// @externalDocs.description Find out more about our API
+// @externalDocs.url https://docs.example.com
 import (
 	"context"
 	"os"
@@ -17,7 +60,9 @@ import (
 	"github.com/ssoydabas/auth-service/pkg/postgres"
 
 	"github.com/labstack/echo/v4"
+	_ "github.com/ssoydabas/auth-service/docs"
 	"github.com/ssoydabas/auth-service/pkg/middleware"
+	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
 const ShutdownTimeout = 5 * time.Second
@@ -35,6 +80,7 @@ func main() {
 
 	e := echo.New()
 	e.Use(middleware.ErrorHandler)
+	e.GET("/swagger/*", echoSwagger.WrapHandler)
 	apiVersion := "/v1"
 	apiPrefix := e.Group("/api" + apiVersion)
 

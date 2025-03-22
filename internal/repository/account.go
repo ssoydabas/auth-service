@@ -14,8 +14,8 @@ type AccountRepository interface {
 	GetAccountByEmailOrPhone(ctx context.Context, email, phone string) (*models.Account, error)
 	GetAccountPasswordByAccountID(ctx context.Context, accountID uint) (*models.AccountPassword, error)
 
-	ExistsByEmail(ctx context.Context, email string) (bool, error)
-	ExistsByPhone(ctx context.Context, phone string) (bool, error)
+	ExistsByEmail(ctx context.Context, email string) bool
+	ExistsByPhone(ctx context.Context, phone string) bool
 
 	SetResetPasswordToken(ctx context.Context, accountID uint, token string) error
 	GetAccountByResetPasswordToken(ctx context.Context, token string) (*models.Account, error)
@@ -64,7 +64,7 @@ func (r *accountRepository) GetAccountPasswordByAccountID(ctx context.Context, a
 	return &accountPassword, nil
 }
 
-func (r *accountRepository) ExistsByEmail(ctx context.Context, email string) (bool, error) {
+func (r *accountRepository) ExistsByEmail(ctx context.Context, email string) bool {
 	exists := false
 	err := r.db.WithContext(ctx).
 		Model(&models.Account{}).
@@ -74,12 +74,12 @@ func (r *accountRepository) ExistsByEmail(ctx context.Context, email string) (bo
 		Error
 
 	if err == gorm.ErrRecordNotFound {
-		return false, nil
+		return false
 	}
-	return exists, err
+	return exists
 }
 
-func (r *accountRepository) ExistsByPhone(ctx context.Context, phone string) (bool, error) {
+func (r *accountRepository) ExistsByPhone(ctx context.Context, phone string) bool {
 	exists := false
 	err := r.db.WithContext(ctx).
 		Model(&models.Account{}).
@@ -89,9 +89,9 @@ func (r *accountRepository) ExistsByPhone(ctx context.Context, phone string) (bo
 		Error
 
 	if err == gorm.ErrRecordNotFound {
-		return false, nil
+		return false
 	}
-	return exists, err
+	return exists
 }
 
 func (r *accountRepository) SetResetPasswordToken(ctx context.Context, accountID uint, token string) error {

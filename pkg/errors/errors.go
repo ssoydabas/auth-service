@@ -21,7 +21,7 @@ type AppError struct {
 	Type    ErrorType `json:"type"`
 	Message string    `json:"message"`
 	Code    int       `json:"code"`
-	Details any       `json:"details,omitempty"`
+	Errors  any       `json:"errors,omitempty"`
 }
 
 func (e *AppError) Error() string {
@@ -37,12 +37,12 @@ var statusCodeMap = map[ErrorType]int{
 	ErrorTypeUnauthorized: http.StatusUnauthorized,
 }
 
-func ValidationError(message string, details any) *AppError {
+func ValidationError(message string, errors any) *AppError {
 	return &AppError{
 		Type:    ErrorTypeValidation,
 		Message: message,
 		Code:    statusCodeMap[ErrorTypeValidation],
-		Details: details,
+		Errors:  errors,
 	}
 }
 
@@ -67,7 +67,7 @@ func InternalError(err error) *AppError {
 		Type:    ErrorTypeInternal,
 		Message: "Internal server error",
 		Code:    statusCodeMap[ErrorTypeInternal],
-		Details: fmt.Sprintf("%v", err),
+		Errors:  fmt.Sprintf("%v", err),
 	}
 }
 

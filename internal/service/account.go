@@ -36,8 +36,14 @@ func NewAccountService(accountRepository repository.AccountRepository) AccountSe
 }
 
 func (s *accountService) CreateAccount(ctx context.Context, req dto.CreateAccountRequest) error {
-	if err := s.checkAccountUniqueness(ctx, req.Email, req.Phone); err != nil {
-		return err
+	emailExists := s.accountRepository.ExistsByEmail(ctx, req.Email)
+	if emailExists {
+		return errors.ConflictError("email already in use")
+	}
+
+	phoneExists := s.accountRepository.ExistsByPhone(ctx, req.Phone)
+	if phoneExists {
+		return errors.ConflictError("phone number already in use")
 	}
 
 	account := models.Account{
@@ -177,15 +183,15 @@ func (s *accountService) ResetPassword(ctx context.Context, req dto.ResetPasswor
 func (s *accountService) VerifyAccountEmail(ctx context.Context, req dto.VerifyAccountRequest) error {
 	account, err := s.accountRepository.GetAccountByEmailVerificationToken(ctx, req.Token)
 	if err != nil {
-		return fmt.Errorf("failed to get account by email verification token: %w", err)
+		return errors.NotFoundError("Account not found")
 	}
 
 	if err := s.accountRepository.UpdateAccountVerificationStatus(ctx, account.ID, "verified"); err != nil {
-		return fmt.Errorf("failed to update account verification status: %w", err)
+		return err
 	}
 
 	if err := s.accountRepository.ClearEmailVerificationToken(ctx, account.ID); err != nil {
-		return fmt.Errorf("failed to clear email verification token: %w", err)
+		return err
 	}
 
 	return nil

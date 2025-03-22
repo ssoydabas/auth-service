@@ -1,0 +1,412 @@
+basePath: /api/v1
+definitions:
+  dto.AccountResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: integer
+      last_name:
+        type: string
+      phone:
+        type: string
+      photo_url:
+        type: string
+      updated_at:
+        type: string
+      verification_status:
+        type: string
+    type: object
+  dto.AuthenticateAccountRequest:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 8
+        type: string
+      phone:
+        type: string
+    required:
+    - password
+    type: object
+  dto.AuthenticateAccountResponse:
+    properties:
+      token:
+        type: string
+    type: object
+  dto.CreateAccountRequest:
+    properties:
+      email:
+        type: string
+      first_name:
+        maxLength: 50
+        minLength: 2
+        type: string
+      last_name:
+        maxLength: 50
+        minLength: 2
+        type: string
+      password:
+        minLength: 8
+        type: string
+      phone:
+        type: string
+    required:
+    - email
+    - first_name
+    - last_name
+    - password
+    - phone
+    type: object
+  dto.ErrorData:
+    properties:
+      code:
+        type: integer
+      message:
+        type: string
+    type: object
+  dto.ResetPasswordRequest:
+    properties:
+      confirm_password:
+        minLength: 8
+        type: string
+      password:
+        minLength: 8
+        type: string
+      token:
+        type: string
+    required:
+    - confirm_password
+    - password
+    - token
+    type: object
+  dto.SetResetPasswordTokenRequest:
+    properties:
+      email:
+        type: string
+      phone:
+        type: string
+    type: object
+  dto.StandardResponse:
+    properties:
+      data: {}
+      error:
+        $ref: '#/definitions/dto.ErrorData'
+    type: object
+  dto.ValidationErrorResponse:
+    properties:
+      code:
+        type: integer
+      errors:
+        items:
+          $ref: '#/definitions/validator.ValidationError'
+        type: array
+      message:
+        type: string
+    type: object
+  dto.VerifyAccountRequest:
+    properties:
+      token:
+        type: string
+    required:
+    - token
+    type: object
+  validator.ValidationError:
+    properties:
+      field:
+        type: string
+      message:
+        type: string
+    type: object
+externalDocs:
+  description: Find out more about our API
+  url: https://docs.example.com
+host: localhost:8080
+info:
+  contact:
+    email: ssoydabas41@gmail.com
+    name: Sertan Soydabas
+    url: https://github.com/ssoydabas
+  description: A comprehensive authentication service providing user management, authentication,
+    and authorization capabilities.
+  license:
+    name: MIT
+    url: https://github.com/ssoydabas/auth-service/LICENSE
+  termsOfService: http://swagger.io/terms/
+  title: Authentication Service API
+  version: "1.0"
+  x-logo:
+    altText: API Logo
+    backgroundColor: '#FFFFFF'
+    url: https://your-logo-url.com
+paths:
+  /accounts:
+    post:
+      consumes:
+      - application/json
+      description: Create a new account
+      parameters:
+      - description: Account details
+        in: body
+        name: account
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateAccountRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Account created successfully
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ValidationErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorData'
+      summary: Create a new account
+      tags:
+      - accounts
+  /accounts/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get an account details by their ID
+      parameters:
+      - description: Account ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.AccountResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorData'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorData'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorData'
+      summary: Get an account by ID
+      tags:
+      - accounts
+  /accounts/authenticate:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate an account and receive a JWT token
+      parameters:
+      - description: Account credentials
+        in: body
+        name: account
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AuthenticateAccountRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.AuthenticateAccountResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ValidationErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorData'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorData'
+      summary: Authenticate an account
+      tags:
+      - accounts
+  /accounts/me:
+    get:
+      consumes:
+      - application/json
+      description: Get account details using JWT token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.AccountResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorData'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorData'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorData'
+      security:
+      - BearerAuth: []
+      summary: Get current account details
+      tags:
+      - accounts
+  /accounts/reset-password:
+    post:
+      consumes:
+      - application/json
+      description: Reset password using the token received via email
+      parameters:
+      - description: Reset token and new password
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Password reset successfully
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ValidationErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorData'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorData'
+      summary: Reset password
+      tags:
+      - accounts
+  /accounts/set-reset-password-token:
+    post:
+      consumes:
+      - application/json
+      description: Request a password reset token to be sent to email
+      parameters:
+      - description: Email address
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SetResetPasswordTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Reset token
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.StandardResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ValidationErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorData'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorData'
+      summary: Request password reset
+      tags:
+      - accounts
+  /accounts/verify-email:
+    post:
+      consumes:
+      - application/json
+      description: Verify account email using verification token
+      parameters:
+      - description: Verification token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.VerifyAccountRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Email verified successfully
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ValidationErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorData'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorData'
+      summary: Verify email address
+      tags:
+      - accounts
+produces:
+- application/json
+schemes:
+- http
+- https
+securityDefinitions:
+  BearerAuth:
+    description: Enter the token with the `Bearer ` prefix, e.g. "Bearer abcde12345"
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
+tags:
+- description: Account management operations including registration, login, profile
+    updates, and password management
+  externalDocs:
+    description: Extended documentation for the account operations
+    url: https://docs.example.com/accounts
+  name: Accounts
+- description: Authentication operations including token management and validation
+  externalDocs:
+    description: Detailed information about the authentication process
+    url: https://docs.example.com/authentication
+  name: Authentication
+- description: Authorization operations including role management and permissions
+  externalDocs:
+    description: Complete guide to authorization mechanisms
+    url: https://docs.example.com/authorization
+  name: Authorization
