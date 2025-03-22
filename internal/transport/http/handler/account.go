@@ -6,6 +6,7 @@ import (
 
 	"github.com/ssoydabas/auth-service/internal/dto"
 	"github.com/ssoydabas/auth-service/internal/service"
+	"github.com/ssoydabas/auth-service/pkg/errors"
 	"github.com/ssoydabas/auth-service/pkg/validator"
 
 	"github.com/labstack/echo/v4"
@@ -53,65 +54,45 @@ func (h *accountHandler) AddRoutes(e *echo.Group) {
 func (h *accountHandler) CreateAccount(c echo.Context) error {
 	var req dto.CreateAccountRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(echo.ErrBadRequest.Code, dto.ErrorData{
-			Code:    400,
-			Message: "Invalid request body",
-		})
+		return errors.BadRequestError("Invalid request body")
 	}
 
 	if err := req.Validate(); err != nil {
 		if validationErrors, ok := err.(validator.ValidationErrors); ok {
-			return c.JSON(echo.ErrBadRequest.Code, dto.ValidationErrorResponse{
-				Code:    400,
-				Message: "Validation failed",
-				Errors:  validationErrors,
-			})
+			return errors.ValidationError("Validation failed", validationErrors)
 		}
-		return c.JSON(echo.ErrBadRequest.Code, dto.ErrorData{
-			Code:    400,
-			Message: err.Error(),
-		})
+		return errors.BadRequestError(err.Error())
 	}
 
 	if err := h.accountService.CreateAccount(c.Request().Context(), req); err != nil {
-		return c.JSON(echo.ErrInternalServerError.Code, dto.ErrorData{
-			Code:    500,
-			Message: err.Error(),
-		})
+		if appErr, ok := err.(*errors.AppError); ok {
+			return appErr
+		}
+		return errors.InternalError(err)
 	}
 
-	return c.NoContent(http.StatusOK)
+	return c.NoContent(http.StatusCreated)
 }
 
 func (h *accountHandler) AuthenticateAccount(c echo.Context) error {
 	var req dto.AuthenticateAccountRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(echo.ErrBadRequest.Code, dto.ErrorData{
-			Code:    400,
-			Message: "Invalid request body",
-		})
+		return errors.BadRequestError("Invalid request body")
 	}
 
 	if err := req.Validate(); err != nil {
 		if validationErrors, ok := err.(validator.ValidationErrors); ok {
-			return c.JSON(echo.ErrBadRequest.Code, dto.ValidationErrorResponse{
-				Code:    400,
-				Message: "Validation failed",
-				Errors:  validationErrors,
-			})
+			return errors.ValidationError("Validation failed", validationErrors)
 		}
-		return c.JSON(echo.ErrBadRequest.Code, dto.ErrorData{
-			Code:    400,
-			Message: err.Error(),
-		})
+		return errors.BadRequestError(err.Error())
 	}
 
 	token, err := h.accountService.AuthenticateAccount(c.Request().Context(), req)
 	if err != nil {
-		return c.JSON(echo.ErrInternalServerError.Code, dto.ErrorData{
-			Code:    500,
-			Message: err.Error(),
-		})
+		if appErr, ok := err.(*errors.AppError); ok {
+			return appErr
+		}
+		return errors.InternalError(err)
 	}
 
 	return c.JSON(http.StatusOK, dto.AuthenticateAccountResponse{
@@ -122,25 +103,19 @@ func (h *accountHandler) AuthenticateAccount(c echo.Context) error {
 func (h *accountHandler) GetAccountByID(c echo.Context) error {
 	id := c.Param("id")
 	if id == "" {
-		return c.JSON(echo.ErrBadRequest.Code, dto.ErrorData{
-			Code:    400,
-			Message: "Invalid account ID",
-		})
+		return errors.BadRequestError("Account ID is required")
 	}
 
 	if _, err := strconv.ParseUint(id, 10, 64); err != nil {
-		return c.JSON(echo.ErrBadRequest.Code, dto.ErrorData{
-			Code:    400,
-			Message: "Invalid account ID: must be a positive number",
-		})
+		return errors.BadRequestError("Invalid account ID: must be a positive number")
 	}
 
 	account, err := h.accountService.GetAccountByID(c.Request().Context(), id)
 	if err != nil {
-		return c.JSON(echo.ErrInternalServerError.Code, dto.ErrorData{
-			Code:    500,
-			Message: err.Error(),
-		})
+		if appErr, ok := err.(*errors.AppError); ok {
+			return appErr
+		}
+		return errors.InternalError(err)
 	}
 
 	return c.JSON(http.StatusOK, dto.StandardResponse{
@@ -151,10 +126,7 @@ func (h *accountHandler) GetAccountByID(c echo.Context) error {
 func (h *accountHandler) GetAccountByToken(c echo.Context) error {
 	authHeader := c.Request().Header.Get("Authorization")
 	if authHeader == "" {
-		return c.JSON(echo.ErrBadRequest.Code, dto.ErrorData{
-			Code:    400,
-			Message: "Missing authorization header",
-		})
+		return errors.BadRequestError("Missing authorization header")
 	}
 
 	token := authHeader
@@ -164,10 +136,10 @@ func (h *accountHandler) GetAccountByToken(c echo.Context) error {
 
 	account, err := h.accountService.GetAccountByToken(c.Request().Context(), token)
 	if err != nil {
-		return c.JSON(echo.ErrInternalServerError.Code, dto.ErrorData{
-			Code:    500,
-			Message: err.Error(),
-		})
+		if appErr, ok := err.(*errors.AppError); ok {
+			return appErr
+		}
+		return errors.InternalError(err)
 	}
 
 	return c.JSON(http.StatusOK, dto.StandardResponse{
@@ -178,32 +150,22 @@ func (h *accountHandler) GetAccountByToken(c echo.Context) error {
 func (h *accountHandler) SetResetPasswordToken(c echo.Context) error {
 	var req dto.SetResetPasswordTokenRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(echo.ErrBadRequest.Code, dto.ErrorData{
-			Code:    400,
-			Message: "Invalid request body",
-		})
+		return errors.BadRequestError("Invalid request body")
 	}
 
 	if err := req.Validate(); err != nil {
 		if validationErrors, ok := err.(validator.ValidationErrors); ok {
-			return c.JSON(echo.ErrBadRequest.Code, dto.ValidationErrorResponse{
-				Code:    400,
-				Message: "Validation failed",
-				Errors:  validationErrors,
-			})
+			return errors.ValidationError("Validation failed", validationErrors)
 		}
-		return c.JSON(echo.ErrBadRequest.Code, dto.ErrorData{
-			Code:    400,
-			Message: err.Error(),
-		})
+		return errors.BadRequestError(err.Error())
 	}
 
 	token, err := h.accountService.SetResetPasswordToken(c.Request().Context(), req)
 	if err != nil {
-		return c.JSON(echo.ErrInternalServerError.Code, dto.ErrorData{
-			Code:    400,
-			Message: err.Error(),
-		})
+		if appErr, ok := err.(*errors.AppError); ok {
+			return appErr
+		}
+		return errors.InternalError(err)
 	}
 
 	return c.JSON(http.StatusOK, dto.StandardResponse{
@@ -214,32 +176,21 @@ func (h *accountHandler) SetResetPasswordToken(c echo.Context) error {
 func (h *accountHandler) ResetPassword(c echo.Context) error {
 	var req dto.ResetPasswordRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(echo.ErrBadRequest.Code, dto.ErrorData{
-			Code:    400,
-			Message: "Invalid request body",
-		})
+		return errors.BadRequestError("Invalid request body")
 	}
 
 	if err := req.Validate(); err != nil {
 		if validationErrors, ok := err.(validator.ValidationErrors); ok {
-			return c.JSON(echo.ErrBadRequest.Code, dto.ValidationErrorResponse{
-				Code:    400,
-				Message: "Validation failed",
-				Errors:  validationErrors,
-			})
+			return errors.ValidationError("Validation failed", validationErrors)
 		}
-		return c.JSON(echo.ErrBadRequest.Code, dto.ErrorData{
-			Code:    400,
-			Message: err.Error(),
-		})
+		return errors.BadRequestError(err.Error())
 	}
 
-	err := h.accountService.ResetPassword(c.Request().Context(), req)
-	if err != nil {
-		return c.JSON(echo.ErrInternalServerError.Code, dto.ErrorData{
-			Code:    500,
-			Message: err.Error(),
-		})
+	if err := h.accountService.ResetPassword(c.Request().Context(), req); err != nil {
+		if appErr, ok := err.(*errors.AppError); ok {
+			return appErr
+		}
+		return errors.InternalError(err)
 	}
 
 	return c.NoContent(http.StatusOK)

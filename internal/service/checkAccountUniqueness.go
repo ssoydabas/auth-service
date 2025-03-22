@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"fmt"
+
+	"github.com/ssoydabas/auth-service/pkg/errors"
 )
 
 func (s *accountService) checkAccountUniqueness(ctx context.Context, email, phone string) error {
@@ -11,7 +13,7 @@ func (s *accountService) checkAccountUniqueness(ctx context.Context, email, phon
 		return fmt.Errorf("failed to check email existence: %w", err)
 	}
 	if emailExists {
-		return fmt.Errorf("email already in use")
+		return errors.ConflictError("email already in use")
 	}
 
 	phoneExists, err := s.accountRepository.ExistsByPhone(ctx, phone)
@@ -19,7 +21,7 @@ func (s *accountService) checkAccountUniqueness(ctx context.Context, email, phon
 		return fmt.Errorf("failed to check phone existence: %w", err)
 	}
 	if phoneExists {
-		return fmt.Errorf("phone number already in use")
+		return errors.ConflictError("phone number already in use")
 	}
 
 	return nil

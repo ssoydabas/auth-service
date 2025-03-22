@@ -8,6 +8,7 @@ import (
 
 	"github.com/ssoydabas/auth-service/internal/dto"
 	"github.com/ssoydabas/auth-service/internal/repository"
+	"github.com/ssoydabas/auth-service/pkg/errors"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -55,7 +56,7 @@ func (s *accountService) CreateAccount(ctx context.Context, req dto.CreateAccoun
 	}
 
 	if err := s.accountRepository.CreateAccount(ctx, account); err != nil {
-		return fmt.Errorf("failed to create account: %w", err)
+		return err
 	}
 
 	return nil
@@ -64,16 +65,16 @@ func (s *accountService) CreateAccount(ctx context.Context, req dto.CreateAccoun
 func (s *accountService) AuthenticateAccount(ctx context.Context, req dto.AuthenticateAccountRequest) (string, error) {
 	account, err := s.accountRepository.GetAccountByEmailOrPhone(ctx, req.Email, req.Phone)
 	if err != nil {
-		return "", fmt.Errorf("failed to get account by email or phone: %w", err)
+		return "", errors.NotFoundError("Account not found")
 	}
 
 	accountPassword, err := s.accountRepository.GetAccountPasswordByAccountID(ctx, account.ID)
 	if err != nil {
-		return "", fmt.Errorf("failed to get account password by account id: %w", err)
+		return "", errors.NotFoundError("Account not found")
 	}
 
 	if !verifyPassword(req.Password, accountPassword.Password) {
-		return "", fmt.Errorf("invalid password")
+		return "", errors.AuthError("Invalid credentials")
 	}
 
 	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -82,7 +83,7 @@ func (s *accountService) AuthenticateAccount(ctx context.Context, req dto.Authen
 	}).SignedString([]byte(os.Getenv("JWT_SECRET")))
 
 	if err != nil {
-		return "", fmt.Errorf("failed to create token: %w", err)
+		return "", errors.InternalError(err)
 	}
 
 	return token, nil
@@ -91,7 +92,7 @@ func (s *accountService) AuthenticateAccount(ctx context.Context, req dto.Authen
 func (s *accountService) GetAccountByID(ctx context.Context, id string) (*dto.AccountResponse, error) {
 	account, err := s.accountRepository.GetAccountByID(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get account by id: %w", err)
+		return nil, errors.NotFoundError("Account not found")
 	}
 
 	response := dto.AccountResponse{
@@ -111,25 +112,25 @@ func (s *accountService) GetAccountByID(ctx context.Context, id string) (*dto.Ac
 func (s *accountService) GetAccountByToken(ctx context.Context, tokenString string) (*dto.AccountResponse, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			return nil, errors.InternalError(fmt.Errorf("unexpected signing method: %v", token.Header["alg"]))
 		}
 		return []byte(os.Getenv("JWT_SECRET")), nil
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, errors.BadRequestError("Invalid token")
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok || !token.Valid {
-		return nil, err
+		return nil, errors.BadRequestError("Invalid token")
 	}
 
 	userID := fmt.Sprintf("%.0f", claims["sub"].(float64))
 
 	account, err := s.accountRepository.GetAccountByID(ctx, userID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get account: %w", err)
+		return nil, errors.NotFoundError("Account not found")
 	}
 
 	return &dto.AccountResponse{
@@ -148,13 +149,13 @@ func (s *accountService) GetAccountByToken(ctx context.Context, tokenString stri
 func (s *accountService) SetResetPasswordToken(ctx context.Context, req dto.SetResetPasswordTokenRequest) (string, error) {
 	account, err := s.accountRepository.GetAccountByEmailOrPhone(ctx, req.Email, req.Phone)
 	if err != nil {
-		return "", fmt.Errorf("failed to get account by email or phone: %w", err)
+		return "", errors.NotFoundError("Account not found")
 	}
 
 	token := uuid.New().String()
 
 	if err := s.accountRepository.SetResetPasswordToken(ctx, account.ID, token); err != nil {
-		return "", fmt.Errorf("failed to set update password token: %w", err)
+		return "", err
 	}
 
 	return token, nil
@@ -163,11 +164,11 @@ func (s *accountService) SetResetPasswordToken(ctx context.Context, req dto.SetR
 func (s *accountService) ResetPassword(ctx context.Context, req dto.ResetPasswordRequest) error {
 	account, err := s.accountRepository.GetAccountByResetPasswordToken(ctx, req.Token)
 	if err != nil {
-		return fmt.Errorf("failed to get account by reset password token: %w", err)
+		return errors.NotFoundError("Account not found")
 	}
 
 	if err := s.accountRepository.UpdateAccountPassword(ctx, account.ID, hashPassword(req.Password)); err != nil {
-		return fmt.Errorf("failed to reset password: %w", err)
+		return err
 	}
 
 	return nil

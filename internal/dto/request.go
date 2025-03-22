@@ -40,14 +40,6 @@ func (r *CreateAccountRequest) Validate() error {
 }
 
 func (r *AuthenticateAccountRequest) Validate() error {
-	if r.Email == "" && r.Phone == "" {
-		return fmt.Errorf("either email or phone must be provided")
-	}
-
-	if r.Password == "" {
-		return fmt.Errorf("password is required")
-	}
-
 	return validator.ValidateStruct(r)
 }
 

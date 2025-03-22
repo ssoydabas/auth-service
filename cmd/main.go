@@ -17,6 +17,7 @@ import (
 	"github.com/ssoydabas/auth-service/pkg/postgres"
 
 	"github.com/labstack/echo/v4"
+	"github.com/ssoydabas/auth-service/pkg/middleware"
 )
 
 const ShutdownTimeout = 5 * time.Second
@@ -33,6 +34,7 @@ func main() {
 	}
 
 	e := echo.New()
+	e.Use(middleware.ErrorHandler)
 	apiVersion := "/v1"
 	apiPrefix := e.Group("/api" + apiVersion)
 
