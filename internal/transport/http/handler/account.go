@@ -297,8 +297,8 @@ func (h *accountHandler) GetAccountEmailVerificationTokenByID(c echo.Context) er
 		return errors.InternalError(err)
 	}
 
-	return c.JSON(http.StatusOK, dto.StandardResponse{
-		Data: token,
+	return c.JSON(http.StatusOK, dto.TokenResponse{
+		Token: token,
 	})
 }
 

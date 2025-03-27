@@ -34,6 +34,10 @@ type AccountResponse struct {
 	VerificationStatus string `json:"verification_status"`
 }
 
+type TokenResponse struct {
+	Token string `json:"token"`
+}
+
 type AuthenticateAccountResponse struct {
 	Token string `json:"token"`
 }
