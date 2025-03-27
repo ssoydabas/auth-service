@@ -259,8 +259,8 @@ func (h *accountHandler) SetResetPasswordToken(c echo.Context) error {
 		return errors.InternalError(err)
 	}
 
-	return c.JSON(http.StatusOK, dto.StandardResponse{
-		Data: token,
+	return c.JSON(http.StatusOK, dto.TokenResponse{
+		Token: token,
 	})
 }
 
