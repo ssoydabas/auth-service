@@ -19,6 +19,7 @@ type AccountService interface {
 	CreateAccount(ctx context.Context, req dto.CreateAccountRequest) (string, error)
 	AuthenticateAccount(ctx context.Context, req dto.AuthenticateAccountRequest) (string, error)
 	GetAccountByID(ctx context.Context, id string) (*dto.AccountResponse, error)
+	GetAccountByEmail(ctx context.Context, email string) (*dto.AccountResponse, error)
 	GetAccountByToken(ctx context.Context, token string) (*dto.AccountResponse, error)
 	SetResetPasswordToken(ctx context.Context, req dto.SetResetPasswordTokenRequest) (string, error)
 	ResetPassword(ctx context.Context, req dto.ResetPasswordRequest) error
@@ -108,6 +109,27 @@ func (s *accountService) AuthenticateAccount(ctx context.Context, req dto.Authen
 
 func (s *accountService) GetAccountByID(ctx context.Context, id string) (*dto.AccountResponse, error) {
 	account, err := s.accountRepository.GetAccountByID(ctx, id, false)
+	if err != nil {
+		return nil, errors.NotFoundError("Account not found")
+	}
+
+	response := dto.AccountResponse{
+		ID:                 account.ID,
+		FirstName:          account.FirstName,
+		LastName:           account.LastName,
+		Email:              account.Email,
+		Phone:              account.Phone,
+		PhotoUrl:           account.PhotoUrl,
+		VerificationStatus: account.VerificationStatus,
+		CreatedAt:          account.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:          account.UpdatedAt.Format(time.RFC3339),
+	}
+
+	return &response, nil
+}
+
+func (s *accountService) GetAccountByEmail(ctx context.Context, email string) (*dto.AccountResponse, error) {
+	account, err := s.accountRepository.GetAccountByEmail(ctx, email)
 	if err != nil {
 		return nil, errors.NotFoundError("Account not found")
 	}

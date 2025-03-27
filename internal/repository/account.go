@@ -11,6 +11,7 @@ import (
 type AccountRepository interface {
 	CreateAccount(ctx context.Context, model models.Account) error
 	GetAccountByID(ctx context.Context, id string, preloadTokens bool) (*models.Account, error)
+	GetAccountByEmail(ctx context.Context, email string) (*models.Account, error)
 	GetAccountByEmailOrPhone(ctx context.Context, email, phone string) (*models.Account, error)
 	GetAccountPasswordByAccountID(ctx context.Context, accountID uint) (*models.AccountPassword, error)
 
@@ -49,6 +50,14 @@ func (r *accountRepository) GetAccountByID(ctx context.Context, id string, prelo
 	}
 
 	if err := query.First(&account, id).Error; err != nil {
+		return nil, err
+	}
+	return &account, nil
+}
+
+func (r *accountRepository) GetAccountByEmail(ctx context.Context, email string) (*models.Account, error) {
+	var account models.Account
+	if err := r.db.WithContext(ctx).Where("email = ?", email).First(&account).Error; err != nil {
 		return nil, err
 	}
 	return &account, nil

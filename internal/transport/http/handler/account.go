@@ -19,6 +19,7 @@ type AccountHandler interface {
 	CreateAccount(c echo.Context) error
 	AuthenticateAccount(c echo.Context) error
 	GetAccountByID(c echo.Context) error
+	GetAccountByEmail(c echo.Context) error
 	GetAccountByToken(c echo.Context) error
 	SetResetPasswordToken(c echo.Context) error
 	ResetPassword(c echo.Context) error
@@ -45,6 +46,7 @@ func (h *accountHandler) AddRoutes(e *echo.Group) {
 
 	e.POST("/accounts", h.CreateAccount)
 	e.GET("/accounts/:id", h.GetAccountByID)
+	e.GET("/accounts/email/:email", h.GetAccountByEmail)
 	e.POST("/accounts/authenticate", h.AuthenticateAccount)
 	e.GET("/accounts/me", h.GetAccountByToken)
 	e.POST("/accounts/set-reset-password-token", h.SetResetPasswordToken)
@@ -162,6 +164,34 @@ func (h *accountHandler) GetAccountByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, dto.StandardResponse{
 		Data: account,
 	})
+}
+
+// @Summary Get account by email
+// @Description Get account details by email
+// @Tags accounts
+// @Accept json
+// @Produce json
+// @Param email path string true "Email address"
+// @Success 200 {object} dto.StandardResponse{data=dto.AccountResponse}
+// @Failure 400 {object} dto.ErrorData
+// @Failure 404 {object} dto.ErrorData
+// @Failure 500 {object} dto.ErrorData
+// @Router /accounts/email/{email} [get]
+func (h *accountHandler) GetAccountByEmail(c echo.Context) error {
+	email := c.Param("email")
+	if email == "" {
+		return errors.BadRequestError("Email is required")
+	}
+
+	account, err := h.accountService.GetAccountByEmail(c.Request().Context(), email)
+	if err != nil {
+		if appErr, ok := err.(*errors.AppError); ok {
+			return appErr
+		}
+		return errors.InternalError(err)
+	}
+
+	return c.JSON(http.StatusOK, mapAccountToResponse(*account))
 }
 
 // @Summary Get current account details
