@@ -16,7 +16,7 @@ import (
 )
 
 type AccountService interface {
-	CreateAccount(ctx context.Context, req dto.CreateAccountRequest) error
+	CreateAccount(ctx context.Context, req dto.CreateAccountRequest) (string, error)
 	AuthenticateAccount(ctx context.Context, req dto.AuthenticateAccountRequest) (string, error)
 	GetAccountByID(ctx context.Context, id string) (*dto.AccountResponse, error)
 	GetAccountByToken(ctx context.Context, token string) (*dto.AccountResponse, error)
@@ -36,15 +36,15 @@ func NewAccountService(accountRepository repository.AccountRepository) AccountSe
 	}
 }
 
-func (s *accountService) CreateAccount(ctx context.Context, req dto.CreateAccountRequest) error {
+func (s *accountService) CreateAccount(ctx context.Context, req dto.CreateAccountRequest) (string, error) {
 	emailExists := s.accountRepository.ExistsByEmail(ctx, req.Email)
 	if emailExists {
-		return errors.ConflictError("email already in use")
+		return "", errors.ConflictError("email already in use")
 	}
 
 	phoneExists := s.accountRepository.ExistsByPhone(ctx, req.Phone)
 	if phoneExists {
-		return errors.ConflictError("phone number already in use")
+		return "", errors.ConflictError("phone number already in use")
 	}
 
 	account := models.Account{
@@ -63,10 +63,20 @@ func (s *accountService) CreateAccount(ctx context.Context, req dto.CreateAccoun
 	}
 
 	if err := s.accountRepository.CreateAccount(ctx, account); err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	token, err := s.AuthenticateAccount(ctx, dto.AuthenticateAccountRequest{
+		Email:    req.Email,
+		Phone:    req.Phone,
+		Password: req.Password,
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
 }
 
 func (s *accountService) AuthenticateAccount(ctx context.Context, req dto.AuthenticateAccountRequest) (string, error) {

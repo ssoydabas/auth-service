@@ -38,6 +38,11 @@ type AuthenticateAccountResponse struct {
 	Token string `json:"token"`
 }
 
+type VerificationCodeResponse struct {
+	AuthenticateAccountResponse
+	VerificationCode string `json:"verification_code"`
+}
+
 type ValidationErrorResponse struct {
 	Code    int                         `json:"code"`
 	Message string                      `json:"message"`

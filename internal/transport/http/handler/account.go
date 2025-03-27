@@ -77,14 +77,20 @@ func (h *accountHandler) CreateAccount(c echo.Context) error {
 		return errors.BadRequestError(err.Error())
 	}
 
-	if err := h.accountService.CreateAccount(c.Request().Context(), req); err != nil {
+	token, err := h.accountService.CreateAccount(c.Request().Context(), req)
+	if err != nil {
 		if appErr, ok := err.(*errors.AppError); ok {
 			return appErr
 		}
 		return errors.InternalError(err)
 	}
 
-	return c.NoContent(http.StatusCreated)
+	return c.JSON(http.StatusCreated, dto.VerificationCodeResponse{
+		AuthenticateAccountResponse: dto.AuthenticateAccountResponse{
+			Token: token,
+		},
+		VerificationCode: token,
+	})
 }
 
 // @Summary Authenticate an account
