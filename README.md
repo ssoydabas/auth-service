@@ -207,13 +207,6 @@ The project maintains high test coverage for critical paths:
 - `404` - Not Found
 - `500` - Internal Server Error
 
-## Documentation
-
-For more detailed information about specific endpoints:
-- Account Operations: https://docs.example.com/accounts
-- Authentication Process: https://docs.example.com/authentication
-- Authorization Guide: https://docs.example.com/authorization
-
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](https://github.com/ssoydabas/auth-service/LICENSE) file for details.
