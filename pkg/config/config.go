@@ -1,6 +1,8 @@
 package config
 
 import (
+	"os"
+
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
 )
@@ -13,7 +15,12 @@ type Config struct {
 }
 
 func LoadConfig() (*Config, error) {
-	err := godotenv.Load()
+	envFile := ".env"
+	if customEnvFile := os.Getenv("ENV_FILE"); customEnvFile != "" {
+		envFile = customEnvFile
+	}
+
+	err := godotenv.Load(envFile)
 	if err != nil {
 		return nil, err
 	}

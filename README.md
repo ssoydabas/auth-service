@@ -75,6 +75,96 @@ Authorization: Bearer <your_token>
 - Required fields:
   - token
 
+## Testing
+
+The project includes comprehensive test coverage with both unit and integration tests.
+
+### Test Structure
+
+```
+tests/
+├── integration/           # Integration tests
+│   └── account_integration_test.go
+internal/
+└── service/
+    └── test/             # Unit tests
+        ├── account_auth_test.go
+        ├── account_create_test.go
+        ├── account_security_test.go
+        ├── account_suite_test.go
+        └── account_mock.go
+```
+
+### Unit Tests
+
+Unit tests are implemented using the `testify` package and follow these patterns:
+
+- Test suites are organized by feature/component
+- Mock implementations for dependencies
+- Table-driven tests for comprehensive test cases
+- Clear test case naming and organization
+
+Key test areas:
+- Account creation and validation
+- Authentication flows
+- Password management
+- Email verification
+- Security features
+
+### Integration Tests
+
+Integration tests verify the complete flow of features by testing:
+
+- Database interactions
+- Service layer integration
+- End-to-end workflows
+- Error handling and edge cases
+
+Key integration test areas:
+- Account creation and authentication flow
+- Password reset process
+- Email verification process
+- Duplicate account handling
+
+### Running Tests
+
+To run the tests:
+
+```bash
+# Run all tests
+go test ./...
+
+# Run specific test suite
+go test ./tests/integration/...
+go test ./internal/service/test/...
+
+# Run with coverage
+go test ./... -cover
+
+# Run with verbose output
+go test ./... -v
+```
+
+### Running Tests with Bash Files
+
+Use the bash scripts in the scripts folder, both unit tests and integration tests can be conducted with them. You may need to provide the necessary permissions to the scripts depending on the os of your choice.
+
+### Test Environment
+
+Tests use a separate test environment configuration:
+- Test database configuration in `.env.test`
+- Isolated test database to prevent interference with development data
+- Automatic database cleanup between tests
+
+### Test Coverage
+
+The project maintains high test coverage for critical paths:
+- Account management flows
+- Authentication processes
+- Security features
+- Error handling
+- Input validation
+
 ## Response Formats
 
 ### Success Response

@@ -55,7 +55,7 @@ func (s *accountService) CreateAccount(ctx context.Context, req dto.CreateAccoun
 		Phone:              req.Phone,
 		VerificationStatus: "pending",
 		AccountPassword: models.AccountPassword{
-			Password: hashPassword(req.Password),
+			Password: HashPassword(req.Password),
 		},
 		AccountTokens: models.AccountToken{
 			EmailVerificationToken: uuid.New().String(),
@@ -207,7 +207,7 @@ func (s *accountService) ResetPassword(ctx context.Context, req dto.ResetPasswor
 		return errors.NotFoundError("Account not found")
 	}
 
-	if err := s.accountRepository.UpdateAccountPassword(ctx, account.ID, hashPassword(req.Password)); err != nil {
+	if err := s.accountRepository.UpdateAccountPassword(ctx, account.ID, HashPassword(req.Password)); err != nil {
 		return err
 	}
 
