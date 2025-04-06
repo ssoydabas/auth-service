@@ -158,9 +158,7 @@ func (h *accountHandler) GetAccountByID(c echo.Context) error {
 		return errors.InternalError(err)
 	}
 
-	return c.JSON(http.StatusOK, dto.StandardResponse{
-		Data: account,
-	})
+	return c.JSON(http.StatusOK, mapAccountToResponse(*account))
 }
 
 // @Summary Get account by email
