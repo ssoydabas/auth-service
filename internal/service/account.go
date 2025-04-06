@@ -48,6 +48,7 @@ func (s *accountService) CreateAccount(ctx context.Context, req dto.CreateAccoun
 		return "", errors.ConflictError("phone number already in use")
 	}
 
+	emailVerificationToken := uuid.New().String()
 	account := models.Account{
 		FirstName:          req.FirstName,
 		LastName:           req.LastName,
@@ -58,7 +59,7 @@ func (s *accountService) CreateAccount(ctx context.Context, req dto.CreateAccoun
 			Password: HashPassword(req.Password),
 		},
 		AccountTokens: models.AccountToken{
-			EmailVerificationToken: uuid.New().String(),
+			EmailVerificationToken: emailVerificationToken,
 			PhoneVerificationToken: uuid.New().String(),
 		},
 	}
@@ -67,17 +68,7 @@ func (s *accountService) CreateAccount(ctx context.Context, req dto.CreateAccoun
 		return "", err
 	}
 
-	token, err := s.AuthenticateAccount(ctx, dto.AuthenticateAccountRequest{
-		Email:    req.Email,
-		Phone:    req.Phone,
-		Password: req.Password,
-	})
-
-	if err != nil {
-		return "", err
-	}
-
-	return token, nil
+	return emailVerificationToken, nil
 }
 
 func (s *accountService) AuthenticateAccount(ctx context.Context, req dto.AuthenticateAccountRequest) (string, error) {

@@ -61,7 +61,7 @@ func (h *accountHandler) AddRoutes(e *echo.Group) {
 // @Accept json
 // @Produce json
 // @Param account body dto.CreateAccountRequest true "Account details"
-// @Success 201 {object} nil "Account created successfully"
+// @Success 201 {object} dto.VerificationCodeResponse "Account created successfully"
 // @Failure 400 {object} dto.ValidationErrorResponse
 // @Failure 409 {object} dto.ErrorData
 // @Failure 500 {object} dto.ErrorData
@@ -88,9 +88,6 @@ func (h *accountHandler) CreateAccount(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, dto.VerificationCodeResponse{
-		AuthenticateAccountResponse: dto.AuthenticateAccountResponse{
-			Token: token,
-		},
 		VerificationCode: token,
 	})
 }

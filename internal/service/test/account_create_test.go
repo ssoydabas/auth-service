@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/ssoydabas/auth-service/internal/dto"
-	"github.com/ssoydabas/auth-service/internal/service"
 	"github.com/ssoydabas/auth-service/models"
 	"github.com/ssoydabas/auth-service/pkg/errors"
 	"github.com/stretchr/testify/mock"
@@ -63,35 +63,9 @@ func (suite *AccountServiceTestSuite) TestCreateAccount() {
 						acc.AccountTokens.EmailVerificationToken != "" &&
 						acc.AccountTokens.PhoneVerificationToken != ""
 				})).Return(nil)
-				mockAccount := suite.createTestAccount(1, "test@example.com", "+1234567890")
-				suite.mockRepo.On("GetAccountByEmailOrPhone", mock.Anything, "test@example.com", "+1234567890").
-					Return(mockAccount, nil)
-				suite.mockRepo.On("GetAccountPasswordByAccountID", mock.Anything, uint(1)).
-					Return(&models.AccountPassword{
-						Password: service.HashPassword("password123"),
-					}, nil)
 			},
 			wantToken: true,
 			wantErr:   false,
-		},
-		{
-			name: "authentication fails after creation",
-			req:  suite.createTestAccountRequest("test@example.com", "wrongpassword", "+1234567890"),
-			setupMocks: func() {
-				suite.mockRepo.On("ExistsByEmail", mock.Anything, "test@example.com").Return(false)
-				suite.mockRepo.On("ExistsByPhone", mock.Anything, "+1234567890").Return(false)
-				suite.mockRepo.On("CreateAccount", mock.Anything, mock.Anything).Return(nil)
-				mockAccount := suite.createTestAccount(1, "test@example.com", "+1234567890")
-				suite.mockRepo.On("GetAccountByEmailOrPhone", mock.Anything, "test@example.com", "+1234567890").
-					Return(mockAccount, nil)
-				suite.mockRepo.On("GetAccountPasswordByAccountID", mock.Anything, uint(1)).
-					Return(&models.AccountPassword{
-						Password: service.HashPassword("password123"),
-					}, nil)
-			},
-			wantToken:     false,
-			wantErr:       true,
-			expectedError: errors.AuthError("Invalid credentials"),
 		},
 	}
 
@@ -111,6 +85,8 @@ func (suite *AccountServiceTestSuite) TestCreateAccount() {
 				suite.NoError(err)
 				if tt.wantToken {
 					suite.NotEmpty(token)
+					_, err := uuid.Parse(token)
+					suite.NoError(err)
 				}
 			}
 

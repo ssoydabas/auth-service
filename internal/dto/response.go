@@ -43,7 +43,6 @@ type AuthenticateAccountResponse struct {
 }
 
 type VerificationCodeResponse struct {
-	AuthenticateAccountResponse
 	VerificationCode string `json:"verification_code"`
 }
 
