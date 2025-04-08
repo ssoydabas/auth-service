@@ -57,6 +57,8 @@ func (suite *AccountServiceTestSuite) TestAuthenticateAccount() {
 					Return(&models.AccountPassword{
 						Password: service.HashPassword("correctpassword"),
 					}, nil)
+				suite.mockRepo.On("UpdateLastLoginAt", mock.Anything, uint(1), mock.Anything).
+					Return(nil)
 			},
 			wantToken: true,
 			wantErr:   false,

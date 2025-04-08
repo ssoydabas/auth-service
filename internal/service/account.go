@@ -86,6 +86,12 @@ func (s *accountService) AuthenticateAccount(ctx context.Context, req dto.Authen
 		return "", errors.AuthError("Invalid credentials")
 	}
 
+	// Update last login time
+	now := time.Now()
+	if err := s.accountRepository.UpdateLastLoginAt(ctx, account.ID, &now); err != nil {
+		return "", errors.InternalError(err)
+	}
+
 	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": account.ID,
 		"exp": time.Now().Add(time.Hour * 24).Unix(),
@@ -112,8 +118,14 @@ func (s *accountService) GetAccountByID(ctx context.Context, id string) (*dto.Ac
 		Phone:              account.Phone,
 		PhotoUrl:           account.PhotoUrl,
 		VerificationStatus: account.VerificationStatus,
+		Role:               account.Role,
 		CreatedAt:          account.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:          account.UpdatedAt.Format(time.RFC3339),
+	}
+
+	if account.LastLoginAt != nil {
+		lastLoginAt := account.LastLoginAt.Format(time.RFC3339)
+		response.LastLoginAt = &lastLoginAt
 	}
 
 	return &response, nil
@@ -133,8 +145,14 @@ func (s *accountService) GetAccountByEmail(ctx context.Context, email string) (*
 		Phone:              account.Phone,
 		PhotoUrl:           account.PhotoUrl,
 		VerificationStatus: account.VerificationStatus,
+		Role:               account.Role,
 		CreatedAt:          account.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:          account.UpdatedAt.Format(time.RFC3339),
+	}
+
+	if account.LastLoginAt != nil {
+		lastLoginAt := account.LastLoginAt.Format(time.RFC3339)
+		response.LastLoginAt = &lastLoginAt
 	}
 
 	return &response, nil

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/ssoydabas/auth-service/models"
 
@@ -14,6 +15,7 @@ type AccountRepository interface {
 	GetAccountByEmail(ctx context.Context, email string) (*models.Account, error)
 	GetAccountByEmailOrPhone(ctx context.Context, email, phone string) (*models.Account, error)
 	GetAccountPasswordByAccountID(ctx context.Context, accountID uint) (*models.AccountPassword, error)
+	UpdateLastLoginAt(ctx context.Context, accountID uint, lastLoginAt *time.Time) error
 
 	ExistsByEmail(ctx context.Context, email string) bool
 	ExistsByPhone(ctx context.Context, phone string) bool
@@ -167,4 +169,11 @@ func (r *accountRepository) ClearEmailVerificationToken(ctx context.Context, acc
 		Model(&models.AccountToken{}).
 		Where("account_id = ?", accountID).
 		Update("email_verification_token", "").Error
+}
+
+func (r *accountRepository) UpdateLastLoginAt(ctx context.Context, accountID uint, lastLoginAt *time.Time) error {
+	return r.db.WithContext(ctx).
+		Model(&models.Account{}).
+		Where("id = ?", accountID).
+		Update("last_login_at", lastLoginAt).Error
 }

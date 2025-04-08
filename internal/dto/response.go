@@ -23,15 +23,17 @@ type PaginatedResponse struct {
 }
 
 type AccountResponse struct {
-	ID                 uint   `json:"id"`
-	FirstName          string `json:"first_name"`
-	LastName           string `json:"last_name"`
-	Email              string `json:"email"`
-	Phone              string `json:"phone"`
-	PhotoUrl           string `json:"photo_url"`
-	CreatedAt          string `json:"created_at"`
-	UpdatedAt          string `json:"updated_at"`
-	VerificationStatus string `json:"verification_status"`
+	ID                 uint    `json:"id"`
+	FirstName          string  `json:"first_name"`
+	LastName           string  `json:"last_name"`
+	Email              string  `json:"email"`
+	Phone              string  `json:"phone"`
+	PhotoUrl           string  `json:"photo_url"`
+	CreatedAt          string  `json:"created_at"`
+	UpdatedAt          string  `json:"updated_at"`
+	VerificationStatus string  `json:"verification_status"`
+	Role               string  `json:"role"`
+	LastLoginAt        *string `json:"last_login_at,omitempty"`
 }
 
 type TokenResponse struct {

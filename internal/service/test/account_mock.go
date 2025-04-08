@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/ssoydabas/auth-service/internal/dto"
 	"github.com/ssoydabas/auth-service/models"
@@ -101,5 +102,10 @@ func (m *MockAccountRepository) GetAccountByEmailVerificationToken(ctx context.C
 
 func (m *MockAccountRepository) ClearEmailVerificationToken(ctx context.Context, accountID uint) error {
 	args := m.Called(ctx, accountID)
+	return args.Error(0)
+}
+
+func (m *MockAccountRepository) UpdateLastLoginAt(ctx context.Context, accountID uint, lastLoginAt *time.Time) error {
+	args := m.Called(ctx, accountID, lastLoginAt)
 	return args.Error(0)
 }
